@@ -1,3 +1,4 @@
+#define MAX_NAME_LENGTH 20
 typedef struct {
     char name[MAX_NAME_LENGTH];
     int score;
