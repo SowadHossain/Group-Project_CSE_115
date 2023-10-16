@@ -14,7 +14,7 @@ printf("6.Exit:\n");
 do{
 printf("\nChose an option: ");
 scanf("%d", &n);
-}while(n<1 && n>6);
+}while(n<1 || n>6);
 return n;
 }
 int newgame(){
