@@ -1,7 +1,22 @@
 #include <stdio.h>
 
+int mainMenu();
+
 int main()
 {
+    int choseOpt = mainMenu();
+    switch (choseOpt)
+    {
+    case 1:
+        newgame();
+        break;
+    
+    default:
+        break;
+    }
+    
+}
+int mainMenu(){
     int i, n;
 
     printf("Main Menu\n");
@@ -30,11 +45,10 @@ int newgame()
         int d = strcmp(str, Names[i]);
         if (d == 0)
         {
-            printf("Valid Username");
-        }
-        else
-        {
-            printf("Invalid Username:");
+            printf("\nValid Username");
+            return 0;
         }
     }
+    printf("\nInvalid Username:");
+    return 1;
 }
