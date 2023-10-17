@@ -15,11 +15,6 @@ struct Users{
 struct Users userArray[MAX_USERS];
 struct Users userArray2[MAX_USERS];
 
-/*
-void setWord(int i,char word_i[10],char clue_i[100]){
-    strcpy(words[i].word , word_i);
-    strcpy(words[i].clue ,clue_i);
-}*/
 
 void setUser(int i,
     char name[50],
@@ -43,21 +38,25 @@ void printUser(int i,struct Users usrArr[]){
 
 int main()
 {
-    FILE *file;
-    file = fopen(".\\data_files\\users.dat", "w");
+   FILE *file;
+     file = fopen(".\\data_files\\users_data.dat", "w");
 
-    setUser(1,"sowad",NUMBER_OF_USERS,0,0,0);
+    setUser(1,"dihan",NUMBER_OF_USERS,0,0,0);
     setUser(2,"abcd",NUMBER_OF_USERS,0,0,0);
     setUser(3,"ahad",NUMBER_OF_USERS,0,0,0);
     setUser(4,"p3",NUMBER_OF_USERS,0,0,0);
     setUser(5,"p4",NUMBER_OF_USERS,0,0,0);
 
-    fwrite(userArray, sizeof(struct Users),MAX_USERS+1,file);
+    fwrite(userArray, sizeof(struct Users),MAX_USERS,file);
 
     fclose(file);
 
-    file = fopen(".\\data_files\\users.dat", "r");
-    fread(userArray2, sizeof(struct Users),MAX_USERS+1,file);
+    file = fopen(".\\data_files\\users_data.dat", "r");
+    int fread_result = fread(userArray2, sizeof(struct Users),MAX_USERS,file);
+    if(fread_result==MAX_USERS)
+        printf("\nUSERS copied succesfully\n");
+    else
+        printf("\nerror copying users file\n");
     printUser(1,userArray2);
     printUser(2,userArray2);
     printUser(3,userArray2);

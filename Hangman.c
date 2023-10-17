@@ -15,8 +15,8 @@ struct Game{
     int wrong_attempts;
     int attempts;
 };
-//use structure
-struct Users{
+//user structure
+struct User{
     char name[50];
     int id;
     int matches_played;
@@ -57,21 +57,23 @@ void printWord(int i,struct Word wd){
     printf("%iCLUE=%s\n",i,wd.clue);
     }
 
-void printUser(int i,struct Users usrArr[MAX_USERS]){
+void printUser(int i,struct User usrArr[]){
     printf("\nName: %s",usrArr[i-1].name);
     printf("\nID: %i",usrArr[i-1].id);
 }
+
 /////////////////////////////////
 
 //array of users
-struct Users userArray[MAX_USERS];
+struct User userArray[MAX_USERS];
 struct Word wordList[MAX_WORD];
 
 int main(){
     printf("Envery thing seems ok\n");
+    loadUsers();
     loadWords();
     printf("After the funcion");
-    loadUsers();
+
 
 }
 
@@ -79,7 +81,12 @@ int main(){
 void loadWords(){
     FILE *file;
     file = fopen(".\\data_files\\words.dat", "r");
-    fread(wordList,sizeof(struct Word),MAX_WORD+1,file);
+    int fread_result = fread(wordList,sizeof(struct Word),MAX_WORD,file);
+
+    if(fread_result==MAX_WORD)
+        printf("\nWords copied succesfully\n");
+    else
+        printf("\nerror copying word file\n");
     printWord(1,wordList[1]);
     printWord(2,wordList[2]);
     printWord(3,wordList[3]);
@@ -87,13 +94,21 @@ void loadWords(){
 }
 
 void loadUsers(){
-    FILE *file;
-    file = fopen(".\\data_files\\users.dat", "r");
-    fread(userArray, sizeof(struct Users),MAX_USERS+1,file);
+    FILE *file1;
+    file1 = fopen(".\\data_files\\users_data.dat", "r");
+                            //wordList,sizeof(struct Word),MAX_WORD,file
+    int fread_result = fread(userArray,sizeof(struct User),MAX_USERS,file1);
+    printf("\n/////////////////////////////////////////////");
+    if(fread_result==MAX_USERS)
+        printf("\nUSERS copied succesfully\nfread returns %d\n",fread_result);
+    else
+        printf("\nerror copying users file\nfread returns %d\n",fread_result);
+
     printUser(1,userArray);
     printUser(2,userArray);
+    printUser(2,userArray);
     printUser(1,userArray);
-    fclose(file);
+    fclose(file1);
 }
 void loadLeaderboard();
 
