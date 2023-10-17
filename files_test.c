@@ -8,12 +8,13 @@ struct Users{
     char name[50];
     int id;
     int matches_played;
+    int scores;
     int isGameSaved;
     int rank;
     //struct Game saved_game;
 };
-struct Users userArray[MAX_USERS];
 struct Users userArray2[MAX_USERS];
+struct Users userArray[MAX_USERS];
 
 
 void setUser(int i,
@@ -23,11 +24,11 @@ void setUser(int i,
     int isGameSaved,
     int rank){
         --i;
-        strcpy(userArray[i].name,name);
-        userArray[i].id = ++NUMBER_OF_USERS;
-        userArray[i].matches_played = matches_played;
-        userArray[i].isGameSaved = isGameSaved;
-        userArray[i].rank = rank;
+        strcpy(userArray2[i].name,name);
+        userArray2[i].id = ++NUMBER_OF_USERS;
+        userArray2[i].matches_played = matches_played;
+        userArray2[i].isGameSaved = isGameSaved;
+        userArray2[i].rank = rank;
 
     }
 
@@ -47,20 +48,20 @@ int main()
     setUser(4,"p3",NUMBER_OF_USERS,0,0,0);
     setUser(5,"p4",NUMBER_OF_USERS,0,0,0);
 
-    fwrite(userArray, sizeof(struct Users),MAX_USERS,file);
+    fwrite(userArray2, sizeof(struct Users),MAX_USERS,file);
 
     fclose(file);
 
     file = fopen(".\\data_files\\users_data.dat", "r");
-    int fread_result = fread(userArray2, sizeof(struct Users),MAX_USERS,file);
+    int fread_result = fread(userArray, sizeof(struct Users),MAX_USERS,file);
     if(fread_result==MAX_USERS)
         printf("\nUSERS copied succesfully\n");
     else
         printf("\nerror copying users file\n");
-    printUser(1,userArray2);
-    printUser(2,userArray2);
-    printUser(3,userArray2);
-    printUser(4,userArray2);
-    printUser(5,userArray2);
+    printUser(1,userArray);
+    printUser(2,userArray);
+    printUser(3,userArray);
+    printUser(4,userArray);
+    printUser(5,userArray);
     fclose(file);
 }
