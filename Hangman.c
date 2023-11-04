@@ -16,6 +16,8 @@ int NUMBER_OF_USERS=0;
 char DASHES[10];
 int Strike=0;
 int CorrectGusses=0;
+int currentScore=0;
+int initflag = 1;
 
 //word structure
 typedef struct{
@@ -57,7 +59,7 @@ void clearscr()				//A function to clear the terminal/cmd window.
 void AddUsers(char username[50]);
 void EditUser();
 void displayLeaderboard();
-void updateLeaderboard(User leaderboard[], int size, const char *name, int score);
+void updateLeaderboard();
 void About();
 void exit();
 int login();
@@ -75,6 +77,7 @@ void drawHangman(int strike);
 void drawTitle();
 void drawgameOver();
 void drawYouWon();
+int init();
 int game();
 
 //////////////////////////////////
@@ -103,21 +106,27 @@ Word choosenWord;
 
 ///////////////////////////////////////////////MAIN FUNCTION////////////////////////
 int main(){
-    printf("Envery thing seems ok\n");
-    loadUsers();
-    loadWords();
-
+    //printf("\n\ninit flag = %d \n",initflag);
+    int flag2;
+    if(initflag==1){
+        printf("Envery thing seems ok\n");
+        loadUsers();
+        loadWords();
+        init();
+        initflag+=1;
+        login();
+    }
     //for(int i =0;i<MAX_USERS;i++){
       //  printUser(i,userArray);
     //}
 
-    int flag1,flag2;
-    flag1 = login();
-    if(flag1==1)
-        flag2 = mainMenu();
-    else
-        main();
-    
+    //int flag1,flag2;
+    printf("\n\ninit flag1 = %d \n",flag2);
+
+    //printf("\n\ninit flag = %d \n",initflag);
+
+    flag2 = mainMenu();
+
     switch (flag2)
     {
     case 1:
@@ -129,12 +138,18 @@ int main(){
     case 3:
         displayLeaderboard();
         break;
+    case 4:
+        EditUser();
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
     default:
         break;
     }
-
+    saveUsers();
     //game();
-    printf("After the funcion");
 }
 
 //data loading function definations
@@ -148,9 +163,6 @@ void loadWords(){
         printf("\nWords copied succesfully\n");
     else
         printf("\nerror copying word file\n");
-    printWord(1,wordList[1]);
-    printWord(2,wordList[2]);
-    printWord(3,wordList[3]);
     fclose(file);
 }
 //function written by SOWAD
@@ -168,6 +180,18 @@ void loadUsers(){
     printUser(4,userArray);
     printUser(5,userArray);
     fclose(file);
+}
+
+int init(){
+    for(int i = 0;i<MAX_USERS;i++){
+        Leaderboard[i] = userArray[i];
+    }
+
+    for(int i =0;i<MAX_USERS;i++){
+        if(userArray[i].id +1 != userArray[i+1].id)
+            break;
+        NUMBER_OF_USERS = userArray[i+1].id;
+    }
 }
 
 int login(){
@@ -220,32 +244,52 @@ void displayLeaderboard()
     }
 }
 //function written by AHNAF
-void updateLeaderboard(User leaderboard[], int size, const char *name, int score)
+/*
+void updateLeaderboard(int size, const char *name, int score)
 {
     for (int i = 0; i < size; i++)
     {
-        if (score > leaderboard[i].scores)
+        if (score > Leaderboard[i].scores)
         {
 
             for (int j = size - 1; j > i; j--)
             {
-                strcpy(leaderboard[j].name, leaderboard[j - 1].name);
-                leaderboard[j].scores = leaderboard[j - 1].scores;
+                strcpy(Leaderboard[j].name, Leaderboard[j - 1].name);
+                Leaderboard[j].scores = Leaderboard[j - 1].scores;
             }
 
-            strcpy(leaderboard[i].name, name);
-            leaderboard[i].scores = score;
+            strcpy(Leaderboard[i].name, name);
+            Leaderboard[i].scores = score;
             break;
+        }
+    }
+}*/
+void updateLeaderboard(){
+    User temp;
+    for(int j =0;j<NUMBER_OF_USERS;j++){
+        for(int i = 0;i<NUMBER_OF_USERS-1;i++){
+            if(Leaderboard[i].scores<Leaderboard[i+1].scores){
+                temp = Leaderboard[i];
+                Leaderboard[i]=Leaderboard[i+1];
+                Leaderboard[i+1]=temp;
+            }
+            else
+                continue;
+        }
+    }
+    for(int i =0;i<NUMBER_OF_USERS;i++){
+        for(int j =0;j<NUMBER_OF_USERS;j++){
+            if(strcmp(Leaderboard[i].name,userArray[j].name)==0){
+                userArray[j].rank = i+1;
+            }
         }
     }
 }
 //function written by FARHAN
 int mainMenu(){
     //updateing leaderboard
-    for(int i =0;i<NUMBER_OF_USERS;i++){
-        updateLeaderboard(Leaderboard,NUMBER_OF_USERS,userArray[i].name,userArray[i].scores);
-    }
-    clearscr();
+    updateLeaderboard();
+    //clearscr();
     int i, n;
     printf("Main Menu\n");
     printf("1.New Game:\n");
@@ -266,10 +310,11 @@ int mainMenu(){
 int newgame(){
     chooseWord();
     Strike = 0;
-    
+    currentUser.isGameSaved=0;
     game();
 }
 int resumegame(){
+    printf("\n\n%d\n",currentUser.isGameSaved);
     if(currentUser.isGameSaved == 1){
         choosenWord = currentUser.saved_game.word;
         Strike = currentUser.saved_game.wrong_attempts;
@@ -305,6 +350,40 @@ int isExistingUser(char username[20]){
 }
 
 //function written by sowad
+void EditUser(){
+    char str[10];
+    char flag;
+    printf("\nCHANGE USERNAME?\n");
+    printf("1.YES\t2.NO");
+    fflush(stdin);
+    scanf("%c",&flag);
+    if(flag=='2')
+        main();
+    for(int i = 0;i<NUMBER_OF_USERS;i++){
+        if(currentUser.name==userArray[i].name){
+            printf("\nYOUR USER NAME:%s",currentUser.name);
+            printf("\nYOUR ID:%d",currentUser.id);
+            printf("\nMATCHES PLAYED:%d",currentUser.matches_played);
+            printf("\nYOUR RANK:%d",currentUser.rank);
+            printf("\nSAVED GAME STATUS:%d",currentUser.isGameSaved);
+            printf("\nYOUR NEW USER NAME:");
+            scanf("%s",str);
+            if(isExistingUser == 1){
+                strcpy(currentUser.name,str);
+                strcpy(userArray[i].name,str);
+                printf("\nYOUR USER NAME:%s",currentUser.name);
+                printf("\nYOUR ID:%d",currentUser.id);
+                printf("\nMATCHES PLAYED:%d",currentUser.matches_played);
+                printf("\nYOUR RANK:%d",currentUser.rank);
+                printf("\nSAVED GAME STATUS:%d",currentUser.isGameSaved);
+            }
+            else{
+                printf("\nUSERNAME EXISTS. USE A DIFFRENT USERNAME\n");
+                EditUser();
+            }
+        }
+    }
+}
 
 void AddUsers(char username[50]){
     for(int i =0;i<MAX_USERS;i++){
@@ -344,13 +423,15 @@ int game(){
     strcpy(chosen_wordHint,choosenWord.clue);
     int word_lenth = strlen(chosen_word);
 
-    for(int i =0;i<word_lenth;i++)
-        DASHES[i]='*';
+    if(currentUser.isGameSaved==0){
+        for(int i =0;i<word_lenth;i++)
+            DASHES[i]='*';
 
-    DASHES[word_lenth]='\0';
+        DASHES[word_lenth]='\0';
+    }
 
     while(1){
-        clearscr();//un-comment this line
+        //clearscr();//un-comment this line
         drawTitle();
         printf("\n gussed letter\nletter Exist= %i,\ncorrect gusse = %i\n",letter_exist,CorrectGusses);//for testing
 
@@ -380,13 +461,14 @@ int game(){
             printf("Quit the game?\n");
             printf("1.Yes\t2.No\n");
             int tempquit;
-            scanf("%d",tempquit);
+            scanf("%d",&tempquit);
             if(tempquit == 2)
                 continue;
             else{
                 printf("Exit to main Menu");
                 printf("1.Exit Without Saving\n2.Save and Exit");
                 int tempexit;
+                scanf("%d",&tempexit);
                 if(tempexit==2){
                     currentUser.isGameSaved = 1;
                     currentUser.saved_game.word = choosenWord;
@@ -416,12 +498,14 @@ int game(){
     letter_exist =0;
     }
     currentUser.matches_played++;
-    currentUser.scores = 10*CorrectGusses-6*Strike;
-    sleep(3);
+    currentScore = 10*CorrectGusses-6*Strike;
+    currentUser.scores += currentScore;
+    sleep(2);
+    clearscr();
     printf("Returning to main menu");
     sleep(2);
-    mainMenu();
-    
+    main();
+
 }
 
 //draw function
@@ -496,7 +580,24 @@ printf(" $$$$$$/\n");
 }
 //data saving functions
 
-void saveUsers(){}
+void saveUsers(){
+    for (int i = 0; i < NUMBER_OF_USERS; i++){
+        int d = strcmp(currentUser.name, userArray[i].name);
+        if (d == 0){
+            userArray[i] = currentUser;
+            break;
+        }
+    }
+    FILE *file;
+    file = fopen(".\\data_files\\users_data.dat", "w");
+    int fwriteflag = fwrite(userArray,sizeof(User),MAX_USERS,file);
+    if(fwriteflag==MAX_USERS)
+        printf("\nUSERS saved succesfully\n");
+    else
+        printf("\nerror saving users file\n");
+    fclose(file);
+
+}
 void saveLeaderboard(){
 //    printf("afsd");
 }
