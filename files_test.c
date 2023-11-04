@@ -13,6 +13,7 @@ typedef struct {
     Word word;
     char guessed_letters[10];
     int wrong_attempts;
+    int currectGuesses;
 } Game;
 
 struct Users{
