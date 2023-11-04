@@ -3,6 +3,8 @@
 #include<string.h>
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h>
+#include<string.h>
 
 
 #define MAX_WORD 5
@@ -14,12 +16,18 @@ int NUMBER_OF_USERS=0;
 char DASHES[10];
 int Strike=0;
 int CorrectGusses=0;
+
+//word structure
+typedef struct{
+    char word[10];
+    char clue[100];
+
+}Word;
 //game status structure
 typedef struct {
-    char word[10];
+    Word word;
     char guessed_letters[10];
     int wrong_attempts;
-    int attempts;
 } Game;
 //user structure
 typedef struct {
@@ -29,14 +37,9 @@ typedef struct {
     int scores;
     int isGameSaved;
     int rank;
-    //struct Game saved_game;
+    Game saved_game;
 } User;
-//word structure
-typedef struct{
-    char word[10];
-    char clue[100];
 
-}Word;
 //data loading functions
 void loadWords();
 void loadUsers();
@@ -51,20 +54,28 @@ void clearscr()				//A function to clear the terminal/cmd window.
 {
     system("@cls||clear");
 }
-void AddUsers();
+void AddUsers(char username[50]);
 void EditUser();
-void displayLeaderboard(User leaderboard[], int size);
+void displayLeaderboard();
 void updateLeaderboard(User leaderboard[], int size, const char *name, int score);
 void About();
 void exit();
+int login();
 int MainMenu();
+int newgame();
+int resumegame();
+int isExistingUser();
 void getUser();
-void setUser();
+void setUser(int i,
+    char name[50],
+    int matches_played,
+    int isGameSaved,
+    int rank);
 void drawHangman(int strike);
 void drawTitle();
 void drawgameOver();
 void drawYouWon();
-void game();
+int game();
 
 //////////////////////////////////
 void printWord(int i,Word wd){
@@ -85,13 +96,44 @@ User userArray[MAX_USERS];
 Word wordList[MAX_WORD];
 //Leaderboard array
 User Leaderboard[MAX_USERS];
+//Current user structure
+User currentUser;
+//Choosen word
+Word choosenWord;
 
 ///////////////////////////////////////////////MAIN FUNCTION////////////////////////
 int main(){
     printf("Envery thing seems ok\n");
     loadUsers();
     loadWords();
-    game();
+
+    //for(int i =0;i<MAX_USERS;i++){
+      //  printUser(i,userArray);
+    //}
+
+    int flag1,flag2;
+    flag1 = login();
+    if(flag1==1)
+        flag2 = mainMenu();
+    else
+        main();
+    
+    switch (flag2)
+    {
+    case 1:
+        newgame();
+        break;
+    case 2:
+        resumegame();
+        break;
+    case 3:
+        displayLeaderboard();
+        break;
+    default:
+        break;
+    }
+
+    //game();
     printf("After the funcion");
 }
 
@@ -127,13 +169,54 @@ void loadUsers(){
     printUser(5,userArray);
     fclose(file);
 }
+
+int login(){
+    printf("Welcome\n");
+    printf("1.Existing User\n");
+    printf("2.New user\n");
+    int temp;
+    scanf(" %d",&temp);
+    char str[20];
+    switch (temp)
+    {
+    case 1:
+        printf("Username:");
+        scanf("%s", str);
+        if(isExistingUser(str) == 0){
+            //clearscr();
+            printf("\nUSERNAME DOSE NOT EXIST.\n");
+            login();
+            }
+        break;
+    case 2:
+        printf("Username:");
+        scanf("%s", str);
+        AddUsers(str);
+        break;
+    default:
+        //clearscr();
+        printf("\nINVALID INPUT\n");
+        login();
+        break;
+    }
+    //current user
+    for (int i = 0; i < NUMBER_OF_USERS; i++){
+        int d = strcmp(str, userArray[i].name);
+        if (d == 0){
+            currentUser = userArray[i];
+            break;
+        }
+    }
+    return 1;
+}
+
 //function written by AHNAF
-void displayLeaderboard(User leaderboard[], int size)
+void displayLeaderboard()
 {
     printf("===== LEADERBOARD =====\n");
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < MAX_USERS; i++)
     {
-        printf("Number %d. %s: %d\n", i + 1, leaderboard[i].name, leaderboard[i].scores);
+        printf("Number %d. %s: %d\n", i + 1, Leaderboard[i].name, Leaderboard[i].scores);
     }
 }
 //function written by AHNAF
@@ -158,8 +241,12 @@ void updateLeaderboard(User leaderboard[], int size, const char *name, int score
 }
 //function written by FARHAN
 int mainMenu(){
+    //updateing leaderboard
+    for(int i =0;i<NUMBER_OF_USERS;i++){
+        updateLeaderboard(Leaderboard,NUMBER_OF_USERS,userArray[i].name,userArray[i].scores);
+    }
+    clearscr();
     int i, n;
-
     printf("Main Menu\n");
     printf("1.New Game:\n");
     printf("2.Resume Game:\n");
@@ -175,36 +262,86 @@ int mainMenu(){
     } while (n < 1 || n > 6);
     return n;
 }
+
+int newgame(){
+    chooseWord();
+    Strike = 0;
+    
+    game();
+}
+int resumegame(){
+    if(currentUser.isGameSaved == 1){
+        choosenWord = currentUser.saved_game.word;
+        Strike = currentUser.saved_game.wrong_attempts;
+        strcpy(DASHES,currentUser.saved_game.guessed_letters);
+        game();
+        return 0;
+    }
+    else{
+        printf("\nSAVED GAME NOT FOUND\nReturning to MAIN MENU\n");
+        return -1;
+    }
+}
 //function written by FARHAN
-int newgame()
+/*const char* newgame()
 {
-    char str[20], i;
+    char str[20];
     printf("Username:");
     scanf("%s", str);
-    for (i = 0; i < 4; i++)
-    {
-        int d = strcmp(str, userArray[i].name);
+
+    if(isExistingUser(str) == 0);
+        AddUsers(str);
+
+    return str;
+}
+*/
+int isExistingUser(char username[20]){
+    for (int i = 0; i < MAX_USERS; i++){
+        int d = strcmp(username, userArray[i].name);
         if (d == 0)
-        {
-            printf("\nValid Username");
-            return 0;
-        }
+            return 1;
     }
-    printf("\nInvalid Username:");
-    return 1;
+    return 0;
+}
+
+//function written by sowad
+
+void AddUsers(char username[50]){
+    for(int i =0;i<MAX_USERS;i++){
+        if(userArray[i].id +1 != userArray[i+1].id)
+            break;
+        NUMBER_OF_USERS = userArray[i+1].id;
+    }
+    setUser(NUMBER_OF_USERS,username,0,0,0);
+}
+
+void setUser(int i,
+    char name[50],
+    int matches_played,
+    int isGameSaved,
+    int rank){
+        --i;
+        strcpy(userArray[i].name,name);
+        userArray[i].id = ++NUMBER_OF_USERS;
+        userArray[i].matches_played = matches_played;
+        userArray[i].isGameSaved = isGameSaved;
+        userArray[i].rank = rank;
+    }
+
+void chooseWord(){
+    //choosing random word from the word list
+    srand(time(NULL));
+    int word_index = (rand() % (MAX_WORD - 1));
+    choosenWord = wordList[word_index];
 }
 
 //game
-void game(){
-    int tempchar;
+int game(){
+    char tempchar;
     int letter_exist=0;
-    Word chosen;
     char chosen_word[20],chosen_wordHint[100];
-    srand(time(NULL));
-    int word_index = (rand() % (MAX_WORD - 1));
-    chosen = wordList[word_index];
-    strcpy(chosen_word,chosen.word);
-    strcpy(chosen_wordHint,chosen.clue);
+    strcpy(chosen_word,choosenWord.word);
+    strcpy(chosen_wordHint,choosenWord.clue);
     int word_lenth = strlen(chosen_word);
 
     for(int i =0;i<word_lenth;i++)
@@ -213,13 +350,13 @@ void game(){
     DASHES[word_lenth]='\0';
 
     while(1){
-        //clearscr();//un-comment this line 
+        clearscr();//un-comment this line
         drawTitle();
         printf("\n gussed letter\nletter Exist= %i,\ncorrect gusse = %i\n",letter_exist,CorrectGusses);//for testing
 
         if(CorrectGusses==word_lenth){
             printf("\nTHE WORD WAS:%s\n\n",chosen_word);
-            void drawYouWon();
+            drawYouWon();
             break;
         }
 
@@ -236,16 +373,36 @@ void game(){
         printf("\n~Enter '*' to save and return to main menu\n");
     //taking input form the user
         printf("\n\nGuess a letter: ");
+        fflush(stdin);
         scanf("%c",&tempchar);
 
         if(tempchar=='*'){
-
-            break;
+            printf("Quit the game?\n");
+            printf("1.Yes\t2.No\n");
+            int tempquit;
+            scanf("%d",tempquit);
+            if(tempquit == 2)
+                continue;
+            else{
+                printf("Exit to main Menu");
+                printf("1.Exit Without Saving\n2.Save and Exit");
+                int tempexit;
+                if(tempexit==2){
+                    currentUser.isGameSaved = 1;
+                    currentUser.saved_game.word = choosenWord;
+                    currentUser.saved_game.wrong_attempts = Strike;
+                    strcpy(currentUser.saved_game.guessed_letters ,DASHES);
+                    printf("\nGame saved at this point\n");
+                    break;
+                }
+                else
+                    break;
+            }
         }
 
     for(int i =0;i<word_lenth;i++){
-        if(chosen_word[i]==tempchar){
-            DASHES[i]=tempchar;
+        if(toupper(chosen_word[i])==toupper(tempchar)){
+            DASHES[i]=chosen_word[i];
             letter_exist+=1;
             CorrectGusses+=1;
             printf("\n ????????\n\\\ngussed letter\nletter Exist= %i,\ncorrect gusse = %i\n",letter_exist,CorrectGusses);//for testing
@@ -258,13 +415,23 @@ void game(){
     }
     letter_exist =0;
     }
+    currentUser.matches_played++;
+    currentUser.scores = 10*CorrectGusses-6*Strike;
+    sleep(3);
+    printf("Returning to main menu");
+    sleep(2);
+    mainMenu();
+    
 }
 
 //draw function
 void drawHangman(int strike){
-    //clearscr();//un-comment this line 
+    //clearscr();//un-comment this line
     switch (strike)
     {
+    case 0:
+        printf("  +---+\n      |\n      |\n      |\n      |\n      |\n=========");
+        break;
     case 1:
         printf("  +---+\n  |   |\n      |\n      |\n      |\n      |\n=========");
         break;
