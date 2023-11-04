@@ -30,6 +30,7 @@ typedef struct {
     Word word;
     char guessed_letters[10];
     int wrong_attempts;
+    int CorrectGusses;
 } Game;
 //user structure
 typedef struct {
@@ -67,6 +68,7 @@ int MainMenu();
 int newgame();
 int resumegame();
 int isExistingUser();
+void saveCurrentUser();
 void getUser();
 void setUser(int i,
     char name[50],
@@ -88,7 +90,9 @@ void printWord(int i,Word wd){
 
 void printUser(int i,User usrArr[]){
     printf("\nName: %s",usrArr[i-1].name);
-    printf("\nID: %i",usrArr[i-1].id);
+    printf("ID: %i",usrArr[i-1].id);
+    printf("score: %i",usrArr[i-1].scores);
+    printf("rank: %i\n",usrArr[i-1].rank);
 }
 
 ///////////////////////////////////////////////ARRAYS//////////////////////////////
@@ -103,6 +107,7 @@ User Leaderboard[MAX_USERS];
 User currentUser;
 //Choosen word
 Word choosenWord;
+
 
 ///////////////////////////////////////////////MAIN FUNCTION////////////////////////
 int main(){
@@ -137,13 +142,20 @@ int main(){
         break;
     case 3:
         displayLeaderboard();
+        main();
         break;
     case 4:
         EditUser();
+        main();
         break;
     case 5:
         break;
     case 6:
+        initflag=1;
+        saveUsers();
+        main();
+        break;
+    case 7:
         break;
     default:
         break;
@@ -174,18 +186,16 @@ void loadUsers(){
         printf("\nUSERS copied succesfully\n");
     else
         printf("\nerror copying users file\n");
-    printUser(1,userArray);
-    printUser(2,userArray);
-    printUser(3,userArray);
-    printUser(4,userArray);
-    printUser(5,userArray);
+    for(int i = 1;i<=MAX_USERS;i++){
+        printUser(i,userArray);
+    }
     fclose(file);
 }
 
 int init(){
-    for(int i = 0;i<MAX_USERS;i++){
+    /*for(int i = 0;i<MAX_USERS;i++){
         Leaderboard[i] = userArray[i];
-    }
+    }*/
 
     for(int i =0;i<MAX_USERS;i++){
         if(userArray[i].id +1 != userArray[i+1].id)
@@ -224,7 +234,7 @@ int login(){
         break;
     }
     //current user
-    for (int i = 0; i < NUMBER_OF_USERS; i++){
+    for (int i = 0; i < MAX_USERS; i++){
         int d = strcmp(str, userArray[i].name);
         if (d == 0){
             currentUser = userArray[i];
@@ -237,6 +247,7 @@ int login(){
 //function written by AHNAF
 void displayLeaderboard()
 {
+    updateLeaderboard();
     printf("===== LEADERBOARD =====\n");
     for (int i = 0; i < MAX_USERS; i++)
     {
@@ -266,8 +277,11 @@ void updateLeaderboard(int size, const char *name, int score)
 }*/
 void updateLeaderboard(){
     User temp;
-    for(int j =0;j<NUMBER_OF_USERS;j++){
-        for(int i = 0;i<NUMBER_OF_USERS-1;i++){
+    for(int i = 0;i<MAX_USERS;i++){
+        Leaderboard[i] = userArray[i];
+    }
+    for(int j =0;j<MAX_USERS;j++){
+        for(int i = 0;i<MAX_USERS-1;i++){
             if(Leaderboard[i].scores<Leaderboard[i+1].scores){
                 temp = Leaderboard[i];
                 Leaderboard[i]=Leaderboard[i+1];
@@ -288,7 +302,8 @@ void updateLeaderboard(){
 //function written by FARHAN
 int mainMenu(){
     //updateing leaderboard
-    updateLeaderboard();
+    saveCurrentUser();
+    //updateLeaderboard();
     //clearscr();
     int i, n;
     printf("Main Menu\n");
@@ -297,19 +312,23 @@ int mainMenu(){
     printf("3.Leader board:\n");
     printf("4.Edit Username:\n");
     printf("5.About:\n");
-    printf("6.Exit:\n");
+    printf("6.Logout\n");
+    printf("7.Exit:\n");
 
     do
     {
         printf("\nChose an option: ");
         scanf("%d", &n);
-    } while (n < 1 || n > 6);
+    } while (n < 1 || n > 7);
     return n;
 }
 
 int newgame(){
+    fflush(stdin);
+    //chooseWord();
     chooseWord();
     Strike = 0;
+    CorrectGusses = 0;
     currentUser.isGameSaved=0;
     game();
 }
@@ -318,13 +337,14 @@ int resumegame(){
     if(currentUser.isGameSaved == 1){
         choosenWord = currentUser.saved_game.word;
         Strike = currentUser.saved_game.wrong_attempts;
+        CorrectGusses = currentUser.saved_game.CorrectGusses;
         strcpy(DASHES,currentUser.saved_game.guessed_letters);
         game();
         return 0;
     }
     else{
         printf("\nSAVED GAME NOT FOUND\nReturning to MAIN MENU\n");
-        return -1;
+        main();
     }
 }
 //function written by FARHAN
@@ -359,29 +379,32 @@ void EditUser(){
     scanf("%c",&flag);
     if(flag=='2')
         main();
-    for(int i = 0;i<NUMBER_OF_USERS;i++){
-        if(currentUser.name==userArray[i].name){
-            printf("\nYOUR USER NAME:%s",currentUser.name);
-            printf("\nYOUR ID:%d",currentUser.id);
-            printf("\nMATCHES PLAYED:%d",currentUser.matches_played);
-            printf("\nYOUR RANK:%d",currentUser.rank);
-            printf("\nSAVED GAME STATUS:%d",currentUser.isGameSaved);
-            printf("\nYOUR NEW USER NAME:");
-            scanf("%s",str);
-            if(isExistingUser == 1){
-                strcpy(currentUser.name,str);
-                strcpy(userArray[i].name,str);
+    else{
+        for(int i = 0;i<NUMBER_OF_USERS;i++){
+            if(strcmp(currentUser.name,userArray[i].name)==0){
                 printf("\nYOUR USER NAME:%s",currentUser.name);
                 printf("\nYOUR ID:%d",currentUser.id);
                 printf("\nMATCHES PLAYED:%d",currentUser.matches_played);
                 printf("\nYOUR RANK:%d",currentUser.rank);
                 printf("\nSAVED GAME STATUS:%d",currentUser.isGameSaved);
+                printf("\nYOUR NEW USER NAME:");
+                fflush(stdin);
+                scanf("%s",str);
+                if(isExistingUser(str) == 0){
+                    strcpy(currentUser.name,str);
+                    strcpy(userArray[i].name,str);
+                    printf("\nYOUR USER NAME:%s",currentUser.name);
+                    printf("\nYOUR ID:%d",currentUser.id);
+                    printf("\nMATCHES PLAYED:%d",currentUser.matches_played);
+                    printf("\nYOUR RANK:%d",currentUser.rank);
+                    printf("\nSAVED GAME STATUS:%d",currentUser.isGameSaved);
+                }
+                else{
+                    printf("\nUSERNAME EXISTS. USE A DIFFRENT USERNAME\n");
+                    EditUser();
+                }
             }
-            else{
-                printf("\nUSERNAME EXISTS. USE A DIFFRENT USERNAME\n");
-                EditUser();
-            }
-        }
+    }
     }
 }
 
@@ -399,23 +422,29 @@ void setUser(int i,
     int matches_played,
     int isGameSaved,
     int rank){
-        --i;
         strcpy(userArray[i].name,name);
-        userArray[i].id = ++NUMBER_OF_USERS;
+        userArray[i].id = NUMBER_OF_USERS;
         userArray[i].matches_played = matches_played;
         userArray[i].isGameSaved = isGameSaved;
         userArray[i].rank = rank;
+        NUMBER_OF_USERS++;
     }
 
 void chooseWord(){
     //choosing random word from the word list
-    srand(time(NULL));
-    int word_index = (rand() % (MAX_WORD - 1));
+    srand((unsigned) time(NULL));
+    int word_index = (rand() % (MAX_WORD));
     choosenWord = wordList[word_index];
 }
 
 //game
 int game(){
+    /*if(currentUser.isGameSaved==0){
+        srand(time(NULL));
+        int word_index = (rand() % (MAX_WORD - 1));
+        choosenWord = wordList[word_index];
+    }*/
+
     char tempchar;
     int letter_exist=0;
     char chosen_word[20],chosen_wordHint[100];
@@ -437,6 +466,9 @@ int game(){
 
         if(CorrectGusses==word_lenth){
             printf("\nTHE WORD WAS:%s\n\n",chosen_word);
+            printf("\nWord lenth +%d\n",word_lenth);//////////
+            printf("Choosen word %s",choosenWord.word);
+            //sleep(5);
             drawYouWon();
             break;
         }
@@ -473,6 +505,7 @@ int game(){
                     currentUser.isGameSaved = 1;
                     currentUser.saved_game.word = choosenWord;
                     currentUser.saved_game.wrong_attempts = Strike;
+                    currentUser.saved_game.CorrectGusses = CorrectGusses;
                     strcpy(currentUser.saved_game.guessed_letters ,DASHES);
                     printf("\nGame saved at this point\n");
                     break;
@@ -500,12 +533,23 @@ int game(){
     currentUser.matches_played++;
     currentScore = 10*CorrectGusses-6*Strike;
     currentUser.scores += currentScore;
+    saveCurrentUser();
+    
     sleep(2);
     clearscr();
     printf("Returning to main menu");
     sleep(2);
     main();
 
+}
+void saveCurrentUser(){
+    for (int i = 0; i < MAX_USERS; i++){
+        int d = strcmp(currentUser.name, userArray[i].name);
+        if (d == 0){
+            userArray[i] = currentUser;
+            break;
+        }
+    }
 }
 
 //draw function
@@ -581,13 +625,7 @@ printf(" $$$$$$/\n");
 //data saving functions
 
 void saveUsers(){
-    for (int i = 0; i < NUMBER_OF_USERS; i++){
-        int d = strcmp(currentUser.name, userArray[i].name);
-        if (d == 0){
-            userArray[i] = currentUser;
-            break;
-        }
-    }
+    saveCurrentUser();
     FILE *file;
     file = fopen(".\\data_files\\users_data.dat", "w");
     int fwriteflag = fwrite(userArray,sizeof(User),MAX_USERS,file);
