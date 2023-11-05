@@ -1,0 +1,8 @@
+The project of the game "Hangman" is created by Ahnaf,Sowad & Dihan
+In this game,We have to guess some correct words and a hint is given to find out the word
+There are maximum 6 chances 
+If you can  guess the correct word within the maximum attempts,you will win the game
+Otherwise you will lose the game.
+
+
+
