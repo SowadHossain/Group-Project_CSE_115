@@ -132,6 +132,8 @@ int main(){
         main();
         break;
     case 5:
+        About();
+        main();
         break;
     case 6:
         initflag=1;
@@ -404,6 +406,32 @@ int game(){
     sleep(2);
     main();
 
+}
+
+void About(){
+    clearscr();
+    drawTitle();
+    FILE *file;
+    char c;
+
+    file = fopen("about.txt","r");
+
+
+    if(file == NULL)
+    {
+        printf("Error in opening file");
+        return(-1);
+    }
+    while(1)
+    {
+        c = fgetc(file);
+        if( feof(file) )
+            break;
+        printf("%c", c);
+    }
+    fclose(file);
+    printf("\n\n\n\n\nEnter a charecter to exit: ");
+    scanf(" %c");
 }
 
 //function written by AHNAF
